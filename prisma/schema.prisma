@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String         @id @default(cuid())
+  email        String       @unique
+  password     String
+  firstName    String       @map("first_name")
+  lastName     String       @map("last_name")
+  phone        String
+  events       Event[]      @relation("CreatedEvents")
+  bookings     Booking[]
+  waitingLists WaitingList[] @relation("user_waiting_lists")
+}
+
+model Event {
+  id               String          @id @default(cuid())
+  name             String
+  availableTickets Int          @map("available_tickets")
+  bookings         Booking[]
+  waitingList   WaitingList?  @relation("event_waiting_list") 
+  creatorId        String
+  creator          User         @relation("CreatedEvents", fields: [creatorId], references: [id])
+
+}
+
+model Booking {
+  id      String    @id @default(cuid())
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id])
+
+  @@unique([userId, eventId])
+}
+
+
+model WaitingList {
+  id      String    @id @default(cuid())
+  eventId String    @unique
+ event   Event     @relation("event_waiting_list", fields: [eventId], references: [id]) 
+  users   User[]    @relation("user_waiting_lists")
+
+  @@map("waiting_list")
+}
