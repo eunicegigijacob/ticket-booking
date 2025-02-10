@@ -1,79 +1,192 @@
 const prisma = require("../../../src/prisma");
-const eventRepository = require("../../../src/modules/events/events.repository");
 
-jest.mock("../../../src/prisma");
+const {
+  createEvent,
+  getEvent,
+  getAllEvents,
+  decreaseEventTicketCount,
+  increaseEventTicketCount,
+} = require("../../../src/modules/events/events.repository"); 
+
+
+jest.mock("../../../src/prisma", () => ({
+  event: {
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    findMany: jest.fn(),
+    update: jest.fn(),
+  },
+}));
 
 describe("Event Repository", () => {
-  afterEach(() => {
+  
+  beforeEach(() => {
     jest.clearAllMocks();
   });
 
   describe("createEvent", () => {
-    it("should create an event in the database", async () => {
-      const eventData = {
-        name: "Sample Event",
+    it("should create a new event successfully", async () => {
+     
+      const mockEventData = {
+        name: "Test Event",
+        description: "A test event",
+        date: new Date(),
         availableTickets: 100,
-        creatorId: "creatorId123",
+      };
+      const mockCreatedEvent = {
+        id: "event123",
+        ...mockEventData,
       };
 
-      const createdEvent = { id: "eventId123", ...eventData };
+      prisma.event.create.mockResolvedValue(mockCreatedEvent);
 
-      prisma.event = {
-        create: jest.fn().mockResolvedValue(createdEvent),
+     
+      const result = await createEvent(mockEventData);
+
+      
+      expect(prisma.event.create).toHaveBeenCalledWith({
+        data: mockEventData,
+      });
+      expect(result).toEqual(mockCreatedEvent);
+    });
+
+    it("should handle errors when creating an event", async () => {
+     
+      const mockEventData = {
+        name: "Test Event",
+        description: "A test event",
       };
 
-      const result = await eventRepository.createEvent(eventData);
-      expect(prisma.event.create).toHaveBeenCalledWith({ data: eventData });
-      expect(result).toEqual(createdEvent);
+      prisma.event.create.mockRejectedValue(new Error("Database error"));
+
+      await expect(createEvent(mockEventData)).rejects.toThrow(
+        "Database error"
+      );
     });
   });
 
   describe("getEvent", () => {
-    it("should retrieve an event by id", async () => {
-      const eventId = "eventId123";
-      const event = {
-        id: eventId,
-        name: "Sample Event",
-        availableTickets: 100,
-        creatorId: "creatorId123",
+    it("should retrieve an event with related data", async () => {
+     
+      const mockEventId = "event123";
+      const mockEvent = {
+        id: mockEventId,
+        name: "Test Event",
+        Waitlist: [],
+        bookings: [],
       };
 
-      prisma.event = {
-        findUnique: jest.fn().mockResolvedValue(event),
-      };
+      prisma.event.findUnique.mockResolvedValue(mockEvent);
 
-      const result = await eventRepository.getEvent(eventId);
+     
+      const result = await getEvent(mockEventId);
+
+      
       expect(prisma.event.findUnique).toHaveBeenCalledWith({
-        where: { id: eventId },
+        where: { id: mockEventId },
+        include: {
+          Waitlist: true,
+          bookings: true,
+        },
       });
-      expect(result).toEqual(event);
+      expect(result).toEqual(mockEvent);
+    });
+
+    it("should return null for non-existent event", async () => {
+     
+      const mockEventId = "nonexistent";
+
+      prisma.event.findUnique.mockResolvedValue(null);
+
+     
+      const result = await getEvent(mockEventId);
+
+      
+      expect(result).toBeNull();
     });
   });
 
   describe("getAllEvents", () => {
     it("should retrieve all events", async () => {
-      const events = [
-        {
-          id: "1",
-          name: "Event 1",
-          availableTickets: 50,
-          creatorId: "creator1",
-        },
-        {
-          id: "2",
-          name: "Event 2",
-          availableTickets: 75,
-          creatorId: "creator2",
-        },
+     
+      const mockEvents = [
+        { id: "event1", name: "Event 1" },
+        { id: "event2", name: "Event 2" },
       ];
 
-      prisma.event = {
-        findMany: jest.fn().mockResolvedValue(events),
+      prisma.event.findMany.mockResolvedValue(mockEvents);
+
+     
+      const result = await getAllEvents();
+
+      
+      expect(prisma.event.findMany).toHaveBeenCalled();
+      expect(result).toEqual(mockEvents);
+    });
+
+    it("should return an empty array when no events exist", async () => {
+     
+      prisma.event.findMany.mockResolvedValue([]);
+
+     
+      const result = await getAllEvents();
+
+      
+      expect(result).toEqual([]);
+    });
+  });
+
+  describe("decreaseEventTicketCount", () => {
+    it("should decrease ticket count by 1", async () => {
+     
+      const mockEventId = "event123";
+      const mockUpdatedEvent = {
+        id: mockEventId,
+        availableTickets: 99,
       };
 
-      const result = await eventRepository.getAllEvents();
-      expect(prisma.event.findMany).toHaveBeenCalled();
-      expect(result).toEqual(events);
+      prisma.event.update.mockResolvedValue(mockUpdatedEvent);
+
+     
+      const result = await decreaseEventTicketCount(mockEventId);
+
+      
+      expect(prisma.event.update).toHaveBeenCalledWith({
+        where: { id: mockEventId },
+        data: {
+          availableTickets: {
+            decrement: 1,
+          },
+        },
+      });
+      expect(result).toEqual(mockUpdatedEvent);
+    });
+  });
+
+  describe("increaseEventTicketCount", () => {
+    it("should increase ticket count by 1", async () => {
+     
+      const mockEventId = "event123";
+      const mockUpdatedEvent = {
+        id: mockEventId,
+        availableTickets: 101,
+      };
+
+      prisma.event.update.mockResolvedValue(mockUpdatedEvent);
+
+     
+      const result = await increaseEventTicketCount(mockEventId);
+
+      
+      expect(prisma.event.update).toHaveBeenCalledWith({
+        where: { id: mockEventId },
+        data: {
+          availableTickets: {
+            increment: 1,
+          },
+        },
+      });
+      expect(result).toEqual(mockUpdatedEvent);
     });
   });
 });

@@ -1,4 +1,4 @@
-const prisma = require("../../prisma"); // Adjust the relative path as needed
+const prisma = require("../../prisma");
 
 
 async function createEvent(eventData) {

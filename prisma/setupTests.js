@@ -8,7 +8,7 @@ beforeEach(async () => {
   
   await prisma.$transaction([
     prisma.booking.deleteMany(),
-    prisma.waitingList.deleteMany(),
+    prisma.waitlist.deleteMany(),
     prisma.event.deleteMany(),
     prisma.user.deleteMany(), 
   ]);

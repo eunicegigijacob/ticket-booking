@@ -10,7 +10,7 @@ const JWT_REFRESH_TOKEN_SECRET = process.env.JWT_SECRET || "default_secret";
 async function signup(userData) {
   const existingUser = await userService.findUserByEmail(userData.email);
   if (existingUser) {
-    throw new Error("User already exists");
+    throw new Error("User already exists, login or reset your password");
   }
 
   const hashedPassword = await bcrypt.hash(userData.password, 10);

@@ -31,12 +31,6 @@ async function getTotalEventBooking(eventId) {
   
 }
 
-// async function getBookingByStatus(status) {
-//   return await prisma.booking.findMany({
-//     where: { status },
-//   });
-// }
-
 async function getBooking(query) {
   return await prisma.booking.findMany({
     where: query ,

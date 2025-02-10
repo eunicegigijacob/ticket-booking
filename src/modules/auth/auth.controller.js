@@ -1,8 +1,5 @@
 const authService = require("./auth.services");
 
-/**
- * Handles user signup.
- */
 async function signup(req, res, next) {
   try {
     const userData = req.body;
@@ -13,9 +10,7 @@ async function signup(req, res, next) {
   }
 }
 
-/**
- * Handles user login.
- */
+
 async function login(req, res, next) {
   try {
     const { email, password } = req.body;
@@ -26,9 +21,6 @@ async function login(req, res, next) {
   }
 }
 
-/**
- * Handles user logout.
- */
 async function logout(req, res, next) {
   try {
     const result = await authService.logout();
@@ -38,9 +30,7 @@ async function logout(req, res, next) {
   }
 }
 
-/**
- * Handles password reset.
- */
+
 async function resetPassword(req, res, next) {
   try {
     const { email, newPassword } = req.body;
