@@ -149,7 +149,42 @@ README.md
 ```
 
 
+**My Design Choices for This Project**
 
+When working on this project, my main focus was on **maintainability, scalability, and performance**. I structured it in a way that makes it easy to extend, debug, and handle real-world scenarios efficiently.
+
+1.  **Modular Structure**
+
+    -   I organized the codebase into **clear, separate modules** to keep things structured and maintainable. Each module handles a specific responsibility, making it easy to debug and scale.
+    -   This approach ensures that if a feature needs to be modified or extended in the future, it can be done without affecting unrelated parts of the system.
+2.  **Authentication & Authorization**
+
+    -   I used **JWT authentication** to securely manage user sessions. The authentication middleware verifies tokens and ensures users are authenticated before accessing protected routes.
+    -   By keeping authentication logic separate, the code remains clean and reusable across different parts of the application.
+3.  **Queue System for Background Processing**
+
+    -   I implemented a **queue system** to handle tasks that don't need to be processed immediately, like sending emails, booking confirmations, and retries for failed operations.
+    -   Without the queue, these tasks would slow down user interactions, making the system feel sluggish. By offloading them to a background process, the application stays **responsive and scalable**.
+4.  **Error Handling & Validation**
+
+    -   I used **Zod** for input validation, ensuring that requests have the correct structure before they hit the business logic. This helps catch issues early and provides clear error messages to the user.
+    -   The centralized **error handler** ensures that errors are properly formatted and logged, making debugging easier and improving the overall user experience.
+5.  **Performance & Asynchronous Processing**
+
+    -   To keep things fast and non-blocking, I used `async/await` for database queries, API calls, and queue processing.
+    -   This prevents bottlenecks and ensures the application can handle multiple requests efficiently, without blocking the main thread.
+6.  **Testing & Reliability**
+
+    -   I wrote unit tests to cover **core functionalities**, making sure everything works as expected.
+    -   Mocks are used to isolate dependencies, ensuring tests focus on specific components without external interference. This improves reliability and makes refactoring safer.
+7.  **Scalability & Maintainability**
+
+    -   I designed the project with **scalability in mind**, using clean architecture principles to keep concerns separate.
+    -   Configurations are handled with environment variables, making deployments across different environments (development, staging, production) smooth and hassle-free.
+
+### Final Thoughts
+
+This project is structured to **grow and adapt** over time. Whether it's adding new features, optimizing performance, or debugging an issue, the modular and scalable approach makes it easy to manage. I always prioritize **clarity, efficiency, and future-proofing**, and I believe this design reflects that.
 ---
 
 ## Contact
