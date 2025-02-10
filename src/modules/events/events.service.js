@@ -13,8 +13,18 @@ async function getAllEvents() {
   return await eventRepository.getAllEvents();
 }
 
+async function decreaseEventTicketCount(eventId) {
+  return await eventRepository.decreaseEventTicketCount(eventId);
+}
+
+async function increaseEventTicketCount(eventId) {
+  return await eventRepository.increaseEventTicketCount(eventId);
+}
+
 module.exports = {
   createEvent,
   getEvent,
   getAllEvents,
+  increaseEventTicketCount,
+  decreaseEventTicketCount
 };

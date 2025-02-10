@@ -41,10 +41,10 @@ async function createBooking(req, res, next) {
 
 async function cancelBooking(req, res, next) {
   try {
-    // The email mentioned POST for cancel booking, but PATCH is more RESTful.
-    // Here we read bookingId from the request body.
     const { bookingId } = req.body;
-    const result = await bookingService.cancelBooking(bookingId);
+    const userId = req.user.id; 
+  
+    const result = await bookingService.cancelBooking(bookingId, userId);
     return res.status(200).json(result);
   } catch (error) {
     next(error);
@@ -61,8 +61,19 @@ async function getBooking(req, res, next) {
   }
 }
 
+async function getAllBookings(req, res, next) {
+  try {
+   const userId = req.user.id
+    const result = await bookingService.getUserBookings(userId);
+    return res.status(200).json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
 module.exports = {
   createBooking,
   cancelBooking,
   getBooking,
+  getAllBookings,
 };

@@ -14,7 +14,7 @@ async function cancelBooking(bookingId) {
   });
 }
 
-async function getBooking(bookingId) {
+async function getBookingById(bookingId) {
   return await prisma.booking.findUnique({
     where: { id: bookingId },
   });
@@ -31,11 +31,25 @@ async function getTotalEventBooking(eventId) {
   
 }
 
-async function getBookingByStatus(status) {
+// async function getBookingByStatus(status) {
+//   return await prisma.booking.findMany({
+//     where: { status },
+//   });
+// }
+
+async function getBooking(query) {
   return await prisma.booking.findMany({
-    where: { status },
+    where: query ,
   });
 }
+
+async function updateBooking(bookingId, data) {
+  return await prisma.booking.update({
+    where: { id: bookingId },
+    data,
+  });
+}
+
 
 
 // waitlist 
@@ -79,22 +93,17 @@ async function getUserWaitList(userId, eventId) {
   });
 }
 
-async function updateBooking(bookingId, data) {
-  return await prisma.booking.update({
-    where: { id: bookingId },
-    data,
-  });
-}
+
 
 module.exports = {
   createBooking,
   cancelBooking,
+  getBookingById,
   getBooking,
+  getTotalEventBooking,
   addToWaitlist,
   getWaitlist,
   removeFromWaitlist,
-  getTotalEventBooking,
   getUserWaitList,
-  getBookingByStatus,
   updateBooking,
 };

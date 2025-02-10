@@ -29,8 +29,17 @@ async function getAvailableTickets(eventId) {
   const event = await eventService.getEvent(eventId);
   if (!event) throw new Error("Event not found");
 
-  const bookingsCount = await bookingRepository.getTotalEventBooking(eventId);
-  return event.availableTickets - bookingsCount;
+  
+  return event.availableTickets;
+}
+
+async function confirmBooking(bookingId) {
+  const booking = await bookingRepository.getBookingById(bookingId);
+
+  if (!booking) {
+    throw new Error(`Booking record not found for id ${bookingId}`);
+  }
+  return booking;
 }
 
 
@@ -72,22 +81,19 @@ async function createBooking(bookingData) {
 
 
 async function processBooking({ bookingId }) {
-  const booking = await bookingRepository.getBooking(bookingId);
-  if (!booking) {
-    throw new Error(`Booking record not found for id ${bookingId}`);
-  }
 
-  if (booking.status !== "PENDING") {
-    
-    return;
-  }
+  const booking = await confirmBooking(bookingId);
 
   const availableTickets = await getAvailableTickets(booking.eventId);
-
 
   if (availableTickets > 0) {
     await bookingRepository.updateBooking(bookingId, { status: "CONFIRMED" });
     console.log(`Booking with Id:${bookingId} has been confirmed.`);
+
+    await eventService.decreaseEventTicketCount(booking.eventId);
+    console.log('updating ticket count decrement')
+
+    
   } else {
     const waitlistedRecord = await addToWaitlist({
       eventId: booking.eventId,
@@ -115,8 +121,9 @@ async function addToWaitlist(bookingData) {
 }
 
 async function reprocessPendingBookings() {
-  const pendingBookings = await bookingRepository.getBookingByStatus(
-    "PENDING"
+  const pendingBookings = await bookingRepository.getBooking({
+    status: "PENDING",
+  }
   );
 
   if(pendingBookings.length > 0) {
@@ -144,7 +151,7 @@ async function reprocessPendingBookings() {
 
 async function getBooking(bookingId) {
 
-  data =  await bookingRepository.getBooking(bookingId);
+  data =  await bookingRepository.getBookingById(bookingId);
 
   if(!data) {
     throw new Error(`Booking record not found for id ${bookingId}`);
@@ -159,6 +166,83 @@ async function getBooking(bookingId) {
   }
 }
 
+async function getUserBookings(userId) {
+ const userBookings = await bookingRepository.getBooking({ userId });
+
+ return {
+   status: true,
+   message: "Bookings successfully retrieved",
+   data: { userBookings },
+ };
+}
+
+async function cancelBooking(bookingId, userId) {
+  const booking = await confirmBooking(bookingId);
+
+  if(userId !== booking.userId) {
+    throw new Error(`You are not authorized to cancel this booking`);
+  }
+
+  if (booking.status === "CANCELLED") {
+    throw new Error(`Booking with id ${bookingId} has already been cancelled`);
+  }
+
+if (booking.status === "CONFIRMED") {
+  await bookingRepository.updateBooking(bookingId, {
+    status: "CANCELLED",
+  });
+
+  await eventService.increaseEventTicketCount(booking.eventId);
+   console.log("updating ticket count increment");
+
+  // get the next waitlisted user
+  const waitlist = await bookingRepository.getWaitlist(booking.eventId);
+
+  if (waitlist.length > 0) {
+    const nextWaitlisted = waitlist[0];
+     const existingBooking = await bookingRepository.getBooking({
+      eventId: booking.eventId,
+      userId: nextWaitlisted.userId,
+     })
+
+    if (existingBooking.length > 0 ) {
+
+      if (existingBooking.status !== "CONFIRMED") { 
+    
+       await bookingQueue.add(
+         { bookingId: existingBooking[0].id },
+         {
+           attempts: 3,
+           backoff: 5000,
+           removeOnComplete: true,
+         }
+       );
+
+      }
+      await bookingRepository.removeFromWaitlist(nextWaitlisted.id);
+    } else {
+      await createBooking({
+        eventId: booking.eventId,
+        userId: nextWaitlisted.userId,
+      })
+    }
+   
+
+    
+  }
+
+  return {
+    status: true,
+    message: "Booking has been cancelled",
+    data: {},
+  };
+
+}
+
+
+  
+}
+
 module.exports = {
   createBooking,
   processBooking,
@@ -166,5 +250,7 @@ module.exports = {
   bookingQueue,
   getAvailableTickets,
   addToWaitlist,
-  getBooking
+  getBooking,
+  getUserBookings,
+  cancelBooking,
 };
