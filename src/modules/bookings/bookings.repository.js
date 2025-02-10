@@ -1,4 +1,5 @@
 const prisma = require("../../prisma");
+const redisService = require("../../redis/redis.service");
 
 async function createBooking(bookingData) {
   return await prisma.booking.create({
@@ -9,7 +10,7 @@ async function createBooking(bookingData) {
 async function cancelBooking(bookingId) {
   return await prisma.booking.update({
     where: { id: bookingId },
-    data: { status: "cancelled" },
+    data: { status: "CANCELLED" },
   });
 }
 
@@ -19,43 +20,69 @@ async function getBooking(bookingId) {
   });
 }
 
-async function getAvailableTickets(eventId) {
-  const event = await prisma.event.findUnique({
-    where: { id: eventId },
-  });
-  if (!event) throw new Error("Event not found");
 
- 
-  const bookingsCount = await prisma.booking.count({
+async function getTotalEventBooking(eventId) {
+  return await prisma.booking.count({
     where: {
       eventId,
-      status: { not: "cancelled" },
+      status: { equals: "CONFIRMED" },
     },
   });
-
-  return event.totalTickets - bookingsCount;
+  
 }
+
+async function getBookingByStatus(status) {
+  return await prisma.booking.findMany({
+    where: { status },
+  });
+}
+
+
+// waitlist 
+//Todo: move waitlist to separate module
 
 async function addToWaitlist(waitlistData) {
 
-  return await prisma.waitingList.create({
+  const waitlistKey = `waitlist:${waitlistData.eventId}`;
+  await redisService.set({
+    key: waitlistKey,
+    ttl: Date.now(),
+    value: waitlistData.userId,
+  });
+
+  return await prisma.waitlist.create({
     data: {
       ...waitlistData,
-      status: "waitlisted",
     },
   });
 }
 
 async function getWaitlist(eventId) {
-  return await prisma.waitingList.findMany({
+  return await prisma.waitlist.findMany({
     where: { eventId },
     orderBy: { createdAt: "asc" },
   });
 }
 
 async function removeFromWaitlist(waitlistId) {
-  return await prisma.waitingList.delete({
+  return await prisma.waitlist.delete({
     where: { id: waitlistId },
+  });
+}
+
+async function getUserWaitList(userId, eventId) {
+  return await prisma.waitlist.findFirst({
+    where: {
+      eventId,
+      userId,
+    },
+  });
+}
+
+async function updateBooking(bookingId, data) {
+  return await prisma.booking.update({
+    where: { id: bookingId },
+    data,
   });
 }
 
@@ -63,8 +90,11 @@ module.exports = {
   createBooking,
   cancelBooking,
   getBooking,
-  getAvailableTickets,
   addToWaitlist,
   getWaitlist,
   removeFromWaitlist,
+  getTotalEventBooking,
+  getUserWaitList,
+  getBookingByStatus,
+  updateBooking,
 };

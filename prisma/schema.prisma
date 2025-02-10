@@ -10,10 +10,11 @@ datasource db {
 model User {
   id           String         @id @default(cuid())
   email        String       @unique
-  password     String
+  password     String?
   firstName    String       @map("first_name")
   lastName     String       @map("last_name")
   phone        String
+  isGuest      Boolean     @default(true) 
   events       Event[]      @relation("CreatedEvents")
   bookings     Booking[]
 
@@ -32,14 +33,23 @@ model Event {
   Waitlist Waitlist[]
 }
 
+enum Status {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  WAITLISTED
+}
+
+
 model Booking {
   id      String    @id @default(cuid())
   userId  String
   user    User   @relation(fields: [userId], references: [id])
   eventId String
   event   Event  @relation(fields: [eventId], references: [id])
+  status  Status  @default(PENDING)
+  waitlistId String?
 
-  @@unique([userId, eventId])
 }
 
 

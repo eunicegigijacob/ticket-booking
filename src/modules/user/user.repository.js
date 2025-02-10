@@ -27,9 +27,19 @@ async function updateUser(email, updateData) {
   });
 }
 
+const createGuestUser = async (data) => {
+  return prisma.user.create({
+    data: {
+      ...data,
+      isGuest: true, 
+    },
+  });
+};
+
 module.exports = {
   createUser,
   findUserByEmail,
   findUserById,
   updateUser,
+  createGuestUser
 };

@@ -1,12 +1,36 @@
 const bookingService = require("./bookings.service");
 
+const {createBookingSchema} = require('./schemas/create-booking.schema')
+const userService = require('../user/user.service')
+
 async function createBooking(req, res, next) {
+
   try {
-    const bookingData = req.body;
-    const result = await bookingService.createBooking(bookingData);
-    // If the result is from adding to the waitlist, you may want to respond with a different code/message.
-    // For simplicity, if the record has a status of "waitlisted", we return 200; otherwise, 201.
-    if (result && result.status === "waitlisted") {
+
+    const {firstName, lastName, phone, email, eventId} = createBookingSchema.parse(req.body);
+
+    let user;
+    user = await userService.findUserByEmail(email);
+
+
+
+    if(!user) {
+      user = await userService.createGuestUser({
+        firstName,
+        lastName,
+        email,
+        phone
+      });   
+    }
+  
+    const result = await bookingService.createBooking({ 
+      eventId,
+      userId: user.id
+    });
+
+    console.log('this is result', result);
+
+    if (result && result.status === false) {
       return res.status(200).json(result);
     }
     return res.status(201).json(result);

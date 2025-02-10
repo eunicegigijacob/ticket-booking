@@ -18,9 +18,21 @@ async function updateUser(email, updateData) {
   return await userRepository.updateUser(email, updateData);
 }
 
+const createGuestUser = async (guestData) => {
+ 
+  if(!guestData) {
+    throw new Error("guestData is required to create guest user");
+  }
+  user = await userRepository.createGuestUser(guestData);
+  
+
+  return user;
+};
+
 module.exports = {
   createUser,
   findUserByEmail,
   findUserById,
   updateUser,
+  createGuestUser
 };
