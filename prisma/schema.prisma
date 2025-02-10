@@ -16,7 +16,8 @@ model User {
   phone        String
   events       Event[]      @relation("CreatedEvents")
   bookings     Booking[]
-  waitingLists WaitingList[] @relation("user_waiting_lists")
+
+  Waitlist Waitlist[]
 }
 
 model Event {
@@ -24,10 +25,11 @@ model Event {
   name             String
   availableTickets Int          @map("available_tickets")
   bookings         Booking[]
-  waitingList   WaitingList?  @relation("event_waiting_list") 
   creatorId        String
   creator          User         @relation("CreatedEvents", fields: [creatorId], references: [id])
 
+
+  Waitlist Waitlist[]
 }
 
 model Booking {
@@ -41,11 +43,13 @@ model Booking {
 }
 
 
-model WaitingList {
-  id      String    @id @default(cuid())
-  eventId String    @unique
- event   Event     @relation("event_waiting_list", fields: [eventId], references: [id]) 
-  users   User[]    @relation("user_waiting_lists")
-
-  @@map("waiting_list")
+model Waitlist {
+  id        String   @id @default(uuid())
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  eventId   String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  position  Int      @default(0) 
+  createdAt DateTime @default(now()) 
 }
+
