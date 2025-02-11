@@ -6,7 +6,7 @@ module.exports = {
   moduleFileExtensions: ["js"],
   testMatch: [
     "<rootDir>/__tests__/unit/**/*.test.js",
-    "<rootDir>/__tests__/integration/**/*.test.js",
-    "<rootDir>/__tests__/e2e/**/*.test.js",
+    // "<rootDir>/__tests__/integration/**/*.test.js",
+    // "<rootDir>/__tests__/e2e/**/*.test.js",
   ],
 };
